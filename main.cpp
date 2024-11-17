@@ -95,6 +95,8 @@ void *produce_vip(void *ptr)
 
 void *consume(void *ptr)
 {
+    RequestType consumed[RequestTypeN];
+    
     SharedData *sd = (SharedData*)ptr;
 
     for (;;)

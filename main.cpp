@@ -14,9 +14,6 @@ void sleep(int ms) {
 
 void *produce_general(void *ptr)
 {
-    unsigned int produced[RequestTypeN];
-    unsigned int in_request_queue[RequestTypeN];
-
     SharedData *sd = (SharedData*)ptr;
 
     for (;;)
@@ -26,7 +23,7 @@ void *produce_general(void *ptr)
         sem_wait(&sd->consumed);
         pthread_mutex_lock(&sd->lock);
 
-        if (sd->general_produced + sd->vip_produced >= sd->max_requests)
+        if (sd->produced[GeneralTable] + sd->produced[VIPRoom] >= sd->max_requests)
         {
             pthread_mutex_unlock(&sd->lock);
             sem_post(&sd->unconsumed);
@@ -34,16 +31,10 @@ void *produce_general(void *ptr)
         }
         
         sd->requests.push(GeneralTable);
-        sd->general_produced++;
-        sd->general_in_request_queue++;
-
-        produced[GeneralTable] = sd->general_produced;
-        produced[VIPRoom] = sd->vip_produced;
-
-        in_request_queue[GeneralTable] = sd->general_in_request_queue;
-        in_request_queue[VIPRoom] = sd->vip_in_request_queue;
+        sd->produced[GeneralTable]++;
+        sd->in_request_queue[GeneralTable]++;
         
-        output_request_added(GeneralTable, produced, in_request_queue);
+        output_request_added(GeneralTable, sd->produced, sd->in_request_queue);
 
         pthread_mutex_unlock(&sd->lock);
         sem_post(&sd->unconsumed);
@@ -54,9 +45,6 @@ void *produce_general(void *ptr)
 
 void *produce_vip(void *ptr)
 {
-    unsigned int produced[RequestTypeN];
-    unsigned int in_request_queue[RequestTypeN];
-    
     SharedData *sd = (SharedData*)ptr;
 
     for (;;)
@@ -67,7 +55,7 @@ void *produce_vip(void *ptr)
         sem_wait(&sd->vip_consumed);
         pthread_mutex_lock(&sd->lock);
 
-        if (sd->general_produced + sd->vip_produced >= sd->max_requests)
+        if (sd->produced[GeneralTable] + sd->produced[VIPRoom] >= sd->max_requests)
         {
             pthread_mutex_unlock(&sd->lock);
             sem_post(&sd->unconsumed);
@@ -75,16 +63,10 @@ void *produce_vip(void *ptr)
         }
         
         sd->requests.push(VIPRoom);
-        sd->vip_produced++;
-        sd->vip_in_request_queue++;
-
-        produced[GeneralTable] = sd->general_produced;
-        produced[VIPRoom] = sd->vip_produced;
-
-        in_request_queue[GeneralTable] = sd->general_in_request_queue;
-        in_request_queue[VIPRoom] = sd->vip_in_request_queue;
+        sd->produced[VIPRoom]++;
+        sd->in_request_queue[VIPRoom]++;
         
-        output_request_added(VIPRoom, produced, in_request_queue);
+        output_request_added(VIPRoom, sd->produced, sd->in_request_queue);
         
         pthread_mutex_unlock(&sd->lock);
         sem_post(&sd->unconsumed);
@@ -95,7 +77,7 @@ void *produce_vip(void *ptr)
 
 void *consume(void *ptr)
 {
-    RequestType consumed[RequestTypeN];
+    unsigned int consumed[RequestTypeN] = {};
     
     SharedData *sd = (SharedData*)ptr;
 
@@ -111,12 +93,10 @@ void *consume(void *ptr)
         sd->requests.pop();
         sd->total_consumed++;
 
-        if (rt == GeneralTable)
-            sd->general_in_request_queue--;
-        else
-            sd->vip_in_request_queue--;
+        consumed[rt]++;
+        sd->in_request_queue[rt]--;
 
-        std::cout << "consumed " << (rt == GeneralTable ? "general" : "vip") << std::endl;
+        output_request_removed(TX, rt, consumed, sd->in_request_queue);
 
         pthread_mutex_unlock(&sd->lock);
         sem_post(&sd->consumed);

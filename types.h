@@ -2,6 +2,7 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include <cstring>
 #include <pthread.h>
 #include <queue>
 #include <semaphore.h>
@@ -15,13 +16,12 @@
 
 struct SharedData
 {
-    SharedData(int max_requests_) : max_requests            (max_requests_),
-                                    general_produced        (0),
-                                    vip_produced            (0),
-                                    total_consumed          (0),
-                                    general_in_request_queue(0),
-                                    vip_in_request_queue    (0)
+    SharedData(int max_requests_) : max_requests  (max_requests_),
+                                    total_consumed(0)
     {
+        memset(in_request_queue, 0, sizeof(unsigned int) * RequestTypeN);
+        memset(produced,         0, sizeof(unsigned int) * RequestTypeN);
+        
         sem_init(&consumed,     VALUE_ZERO, CAPACITY);
         sem_init(&vip_consumed, VALUE_ZERO, VIP_CAPACITY);
         sem_init(&unconsumed,   VALUE_ZERO, DEFAULT_UNCONSUMED_AVAILABLE);
@@ -36,11 +36,9 @@ struct SharedData
     sem_t                   unconsumed;
     sem_t                   main_blocker;
     int                     max_requests;
-    int                     general_produced;
-    int                     vip_produced;
     int                     total_consumed;
-    int                     general_in_request_queue;
-    int                     vip_in_request_queue;
+    unsigned int            produced[RequestTypeN];
+    unsigned int            in_request_queue[RequestTypeN];
     std::queue<RequestType> requests;
 };
 

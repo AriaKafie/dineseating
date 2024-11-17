@@ -7,6 +7,7 @@
 #include <semaphore.h>
 
 #define CAPACITY 18
+#define VIP_CAPACITY 5
 #define DEFAULT_UNCONSUMED_AVAILABLE 0
 #define VALUE_ZERO 0
 
@@ -14,19 +15,28 @@ enum RequestType { GENERAL, VIP };
 
 struct SharedData
 {
-    SharedData(int max_requests) : lock        (PTHREAD_MUTEX_INITIALIZER),
-                                   max_requests(max_requests)
+    SharedData(int max_requests_) : max_requests    (max_requests_),
+                                    general_produced(0),
+                                    vip_produced    (0),
+                                    total_consumed  (0)
     {
-        sem_init(&consumed, VALUE_ZERO, CAPACITY);
-        sem_init(&unconsumed, VALUE_ZERO, DEFAULT_UNCONSUMED_AVAILABLE);
+        sem_init(&consumed,     VALUE_ZERO, CAPACITY);
+        sem_init(&vip_consumed, VALUE_ZERO, VIP_CAPACITY);
+        sem_init(&unconsumed,   VALUE_ZERO, DEFAULT_UNCONSUMED_AVAILABLE);
         sem_init(&main_blocker, VALUE_ZERO, VALUE_ZERO);
+        
+        pthread_mutex_init(&lock, NULL);
     }
     
     pthread_mutex_t         lock;
     sem_t                   consumed;
+    sem_t                   vip_consumed;
     sem_t                   unconsumed;
     sem_t                   main_blocker;
     int                     max_requests;
+    int                     general_produced;
+    int                     vip_produced;
+    int                     total_consumed;
     std::queue<RequestType> requests;
 };
 

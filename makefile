@@ -1,4 +1,4 @@
 all:
-	g++ -std=c++17 main.cpp -o dineseating
+	g++ -std=c++17 *cpp -o dineseating
 clean:
 	rm *~ dineseating

@@ -6,19 +6,21 @@
 #include <queue>
 #include <semaphore.h>
 
+#include "seating.h"
+
 #define CAPACITY 18
 #define VIP_CAPACITY 5
 #define DEFAULT_UNCONSUMED_AVAILABLE 0
 #define VALUE_ZERO 0
 
-enum RequestType { GENERAL, VIP };
-
 struct SharedData
 {
-    SharedData(int max_requests_) : max_requests    (max_requests_),
-                                    general_produced(0),
-                                    vip_produced    (0),
-                                    total_consumed  (0)
+    SharedData(int max_requests_) : max_requests            (max_requests_),
+                                    general_produced        (0),
+                                    vip_produced            (0),
+                                    total_consumed          (0),
+                                    general_in_request_queue(0),
+                                    vip_in_request_queue    (0)
     {
         sem_init(&consumed,     VALUE_ZERO, CAPACITY);
         sem_init(&vip_consumed, VALUE_ZERO, VIP_CAPACITY);
@@ -37,6 +39,8 @@ struct SharedData
     int                     general_produced;
     int                     vip_produced;
     int                     total_consumed;
+    int                     general_in_request_queue;
+    int                     vip_in_request_queue;
     std::queue<RequestType> requests;
 };
 

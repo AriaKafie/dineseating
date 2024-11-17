@@ -2,6 +2,7 @@
 #include <iostream>
 #include <unistd.h>
 
+#include "log.h"
 #include "types.h"
 
 #define SUCCESS 0
@@ -13,6 +14,9 @@ void sleep(int ms) {
 
 void *produce_general(void *ptr)
 {
+    unsigned int produced[RequestTypeN];
+    unsigned int in_request_queue[RequestTypeN];
+
     SharedData *sd = (SharedData*)ptr;
 
     for (;;)
@@ -29,10 +33,17 @@ void *produce_general(void *ptr)
             break;
         }
         
-        sd->requests.push(GENERAL);
+        sd->requests.push(GeneralTable);
         sd->general_produced++;
+        sd->general_in_request_queue++;
 
-        std::cout << "produced " << sd->general_produced << std::endl;
+        produced[GeneralTable] = sd->general_produced;
+        produced[VIPRoom] = sd->vip_produced;
+
+        in_request_queue[GeneralTable] = sd->general_in_request_queue;
+        in_request_queue[VIPRoom] = sd->vip_in_request_queue;
+        
+        output_request_added(GeneralTable, produced, in_request_queue);
 
         pthread_mutex_unlock(&sd->lock);
         sem_post(&sd->unconsumed);
@@ -43,6 +54,9 @@ void *produce_general(void *ptr)
 
 void *produce_vip(void *ptr)
 {
+    unsigned int produced[RequestTypeN];
+    unsigned int in_request_queue[RequestTypeN];
+    
     SharedData *sd = (SharedData*)ptr;
 
     for (;;)
@@ -60,11 +74,18 @@ void *produce_vip(void *ptr)
             break;
         }
         
-        sd->requests.push(GENERAL);
-        sd->general_produced++;
+        sd->requests.push(VIPRoom);
+        sd->vip_produced++;
+        sd->vip_in_request_queue++;
 
-        std::cout << "produced " << sd->general_produced << std::endl;
+        produced[GeneralTable] = sd->general_produced;
+        produced[VIPRoom] = sd->vip_produced;
 
+        in_request_queue[GeneralTable] = sd->general_in_request_queue;
+        in_request_queue[VIPRoom] = sd->vip_in_request_queue;
+        
+        output_request_added(VIPRoom, produced, in_request_queue);
+        
         pthread_mutex_unlock(&sd->lock);
         sem_post(&sd->unconsumed);
     }
@@ -88,10 +109,17 @@ void *consume(void *ptr)
         sd->requests.pop();
         sd->total_consumed++;
 
-        std::cout << "consumed " << std::endl;
+        if (rt == GeneralTable)
+            sd->general_in_request_queue--;
+        else
+            sd->vip_in_request_queue--;
+
+        std::cout << "consumed " << (rt == GeneralTable ? "general" : "vip") << std::endl;
 
         pthread_mutex_unlock(&sd->lock);
         sem_post(&sd->consumed);
+        if (rt == VIPRoom)
+            sem_post(&sd->vip_consumed);
 
         //sleep(100);
     }
@@ -106,7 +134,7 @@ int main(int argc, char **argv)
     pthread_t general_producer, vip_producer, tx, r9;
 
     pthread_create(&general_producer, NULL, &produce_general, &s);
-    //pthread_create(&vip_producer, NULL, &produce_vip, &s);
+    pthread_create(&vip_producer, NULL, &produce_vip, &s);
     pthread_create(&tx, NULL, &consume, &s);
     
     sem_wait(&s.main_blocker);

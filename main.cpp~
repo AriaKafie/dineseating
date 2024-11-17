@@ -1,0 +1,35 @@
+
+#include <iostream>
+
+#include <thread>
+#include <chrono>
+
+void *produce_general(void *ptr)
+{
+    SharedData *sd = (SharedData*)ptr;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+    std::cout << "General" << std::endl;
+
+    sem_post(sd->main_blocker);
+}
+
+void *produce_vip(void *ptr)
+{
+    SharedData *sd = (SharedData*)ptr;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+    std::cout << "VIP" << std::endl;
+
+    sem_post(sd->main_blocker);
+}
+
+int main(int argc, char **argv)
+{
+    SharedData s(100);
+
+    pthread_t g, v;
+    
+    
+    sem_wait(&s.main_blocker);
+}

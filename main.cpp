@@ -20,15 +20,18 @@ void *producer(void *ptr)
     {
         // sleep to simulate production
 
-        sem_wait(&sd->consumed);
-        if (T == VIPRoom)
-            sem_wait(&sd->vip_consumed);
         pthread_mutex_lock(&sd->lock);
+
+        while (sd->in_request_queue[GeneralTable] + sd->in_request_queue[VIPRoom] >= CAPACITY)
+            pthread_cond_wait(&sd->cond_consumed, &sd->lock);
+
+        if (T == VIPRoom)
+            while (sd->in_request_queue[VIPRoom] >= VIP_CAPACITY)
+                pthread_cond_wait(&sd->cond_vip_consumed, &sd->lock);
 
         if (sd->produced[GeneralTable] + sd->produced[VIPRoom] >= sd->max_requests)
         {
             pthread_mutex_unlock(&sd->lock);
-            sem_post(&sd->unconsumed);
             break;
         }
         
@@ -39,7 +42,7 @@ void *producer(void *ptr)
         output_request_added(T, sd->produced, sd->in_request_queue);
 
         pthread_mutex_unlock(&sd->lock);
-        sem_post(&sd->unconsumed);
+        pthread_cond_signal(&sd->cond_unconsumed);
     }
     
     pthread_exit(SUCCESS);
@@ -52,26 +55,28 @@ void *consumer(void *ptr)
 
     for (;;)
     {
-        sem_wait(&sd->unconsumed);
         pthread_mutex_lock(&sd->lock);
 
-        if (sd->m_consumed[TX][GeneralTable]   +
-            sd->m_consumed[TX][VIPRoom]        +
-            sd->m_consumed[Rev9][GeneralTable] +
-            sd->m_consumed[Rev9][VIPRoom]      >= sd->max_requests)
+        if (sd->consumed[TX][GeneralTable]   +
+            sd->consumed[TX][VIPRoom]        +
+            sd->consumed[Rev9][GeneralTable] +
+            sd->consumed[Rev9][VIPRoom]      >= sd->max_requests)
             break;
+
+        while (sd->requests.empty())
+            pthread_cond_wait(&sd->cond_unconsumed, &sd->lock);
         
         RequestType rt = sd->requests.front();
         sd->requests.pop();
-        sd->m_consumed[T][rt]++;
+        sd->consumed[T][rt]++;
         sd->in_request_queue[rt]--;
 
-        output_request_removed(T, rt, sd->m_consumed[T], sd->in_request_queue);
+        output_request_removed(T, rt, sd->consumed[T], sd->in_request_queue);
 
         pthread_mutex_unlock(&sd->lock);
-        sem_post(&sd->consumed);
+        pthread_cond_signal(&sd->cond_consumed);
         if (rt == VIPRoom)
-            sem_post(&sd->vip_consumed);
+            pthread_cond_signal(&sd->cond_vip_consumed);
 
         // sleep to simulate consumption
     }
@@ -92,7 +97,7 @@ int main(int argc, char **argv)
     
     sem_wait(&sd.main_blocker);
 
-    unsigned int *consumed[RequestTypeN] = { sd.m_consumed[TX], sd.m_consumed[Rev9] };
+    unsigned int *consumed_[RequestTypeN] = { sd.consumed[TX], sd.consumed[Rev9] };
     
-    output_production_history(sd.produced, consumed);
+    output_production_history(sd.produced, consumed_);
 }

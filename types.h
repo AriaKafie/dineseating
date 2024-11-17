@@ -20,24 +20,35 @@ struct SharedData
     {
         memset(in_request_queue, 0, sizeof(unsigned int) * RequestTypeN);
         memset(produced,         0, sizeof(unsigned int) * RequestTypeN);
-        memset(m_consumed[TX],   0, sizeof(unsigned int) * RequestTypeN);
-        memset(m_consumed[Rev9], 0, sizeof(unsigned int) * RequestTypeN);
+        memset(consumed[TX],     0, sizeof(unsigned int) * RequestTypeN);
+        memset(consumed[Rev9],   0, sizeof(unsigned int) * RequestTypeN);
+
+        pthread_cond_init(&cond_consumed,     NULL);
+        pthread_cond_init(&cond_vip_consumed, NULL);
+        pthread_cond_init(&cond_unconsumed,   NULL);
         
-        sem_init(&consumed,     VALUE_ZERO, CAPACITY);
-        sem_init(&vip_consumed, VALUE_ZERO, VIP_CAPACITY);
-        sem_init(&unconsumed,   VALUE_ZERO, DEFAULT_UNCONSUMED_AVAILABLE);
         sem_init(&main_blocker, VALUE_ZERO, VALUE_ZERO);
+        
+        /* sem_init(&consumed,     VALUE_ZERO, CAPACITY); */
+        /* sem_init(&vip_consumed, VALUE_ZERO, VIP_CAPACITY); */
+        /* sem_init(&unconsumed,   VALUE_ZERO, DEFAULT_UNCONSUMED_AVAILABLE); */        
         
         pthread_mutex_init(&lock, NULL);
     }
     
     pthread_mutex_t         lock;
-    sem_t                   consumed;
-    sem_t                   vip_consumed;
-    sem_t                   unconsumed;
+
+    pthread_cond_t          cond_consumed;
+    pthread_cond_t          cond_vip_consumed;
+    pthread_cond_t          cond_unconsumed;
     sem_t                   main_blocker;
+    
+    /* sem_t                   consumed; */
+    /* sem_t                   vip_consumed; */
+    /* sem_t                   unconsumed; */
+    
     int                     max_requests;
-    unsigned int            m_consumed[ConsumerTypeN][RequestTypeN];
+    unsigned int            consumed[ConsumerTypeN][RequestTypeN];
     unsigned int            produced[RequestTypeN];
     unsigned int            in_request_queue[RequestTypeN];
     std::queue<RequestType> requests;

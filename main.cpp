@@ -73,7 +73,7 @@ void *consumer(void *ptr)
         if (rt == VIPRoom)
             sem_post(&sd->vip_consumed);
 
-        //sleep(100);
+        // sleep to simulate consumption
     }
     
     sem_post(&sd->main_blocker);

@@ -1,5 +1,4 @@
 
-#include <iostream>
 #include <unistd.h>
 
 #include "log.h"
@@ -83,13 +82,17 @@ void *consumer(void *ptr)
 
 int main(int argc, char **argv)
 {
-    SharedData s(100);
+    SharedData sd(100);
     pthread_t general_producer, vip_producer, tx, r9;
 
-    pthread_create(&general_producer, NULL, &producer<GeneralTable>, &s);
-    pthread_create(&vip_producer,     NULL, &producer<VIPRoom>,      &s);
-    pthread_create(&tx,               NULL, &consumer<TX>,           &s);
-    pthread_create(&r9,               NULL, &consumer<Rev9>,         &s);
+    pthread_create(&general_producer, NULL, &producer<GeneralTable>, &sd);
+    pthread_create(&vip_producer,     NULL, &producer<VIPRoom>,      &sd);
+    pthread_create(&tx,               NULL, &consumer<TX>,           &sd);
+    pthread_create(&r9,               NULL, &consumer<Rev9>,         &sd);
     
-    sem_wait(&s.main_blocker);
+    sem_wait(&sd.main_blocker);
+
+    unsigned int *consumed[RequestTypeN] = { sd.m_consumed[TX], sd.m_consumed[Rev9] };
+    
+    output_production_history(sd.produced, consumed);
 }

@@ -16,11 +16,12 @@
 
 struct SharedData
 {
-    SharedData(int max_requests_) : max_requests  (max_requests_),
-                                    total_consumed(0)
+    SharedData(int max_requests_) : max_requests(max_requests_)
     {
         memset(in_request_queue, 0, sizeof(unsigned int) * RequestTypeN);
         memset(produced,         0, sizeof(unsigned int) * RequestTypeN);
+        memset(m_consumed[TX],   0, sizeof(unsigned int) * RequestTypeN);
+        memset(m_consumed[Rev9], 0, sizeof(unsigned int) * RequestTypeN);
         
         sem_init(&consumed,     VALUE_ZERO, CAPACITY);
         sem_init(&vip_consumed, VALUE_ZERO, VIP_CAPACITY);
@@ -36,7 +37,7 @@ struct SharedData
     sem_t                   unconsumed;
     sem_t                   main_blocker;
     int                     max_requests;
-    int                     total_consumed;
+    unsigned int            m_consumed[ConsumerTypeN][RequestTypeN];
     unsigned int            produced[RequestTypeN];
     unsigned int            in_request_queue[RequestTypeN];
     std::queue<RequestType> requests;

@@ -48,9 +48,7 @@ void *producer(void *ptr)
 
 template<ConsumerType T>
 void *consumer(void *ptr)
-{
-    unsigned int consumed[RequestTypeN] = {};
-    
+{    
     SharedData *sd = (SharedData*)ptr;
 
     for (;;)
@@ -58,17 +56,18 @@ void *consumer(void *ptr)
         sem_wait(&sd->unconsumed);
         pthread_mutex_lock(&sd->lock);
 
-        if (sd->total_consumed >= sd->max_requests)
+        if (sd->m_consumed[TX][GeneralTable]   +
+            sd->m_consumed[TX][VIPRoom]        +
+            sd->m_consumed[Rev9][GeneralTable] +
+            sd->m_consumed[Rev9][VIPRoom]      >= sd->max_requests)
             break;
         
         RequestType rt = sd->requests.front();
         sd->requests.pop();
-        sd->total_consumed++;
-
-        consumed[rt]++;
+        sd->m_consumed[T][rt]++;
         sd->in_request_queue[rt]--;
 
-        output_request_removed(T, rt, consumed, sd->in_request_queue);
+        output_request_removed(T, rt, sd->m_consumed[T], sd->in_request_queue);
 
         pthread_mutex_unlock(&sd->lock);
         sem_post(&sd->consumed);

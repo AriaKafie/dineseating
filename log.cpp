@@ -1,3 +1,7 @@
+
+// Aria Kafie 828109926
+// Anosh Taraporevala 827939860
+
 #include <stdio.h>
 #include <time.h>
 

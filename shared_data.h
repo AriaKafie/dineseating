@@ -20,7 +20,11 @@ inline void sleep(int ms) { usleep(ms * US_PER_MS); }
 
 struct SharedData
 {
-    SharedData(int max_requests_) : max_requests(max_requests_)
+    SharedData(int s, int x, int r, int g, int v) : max_requests(s),
+                                                    tx_time     (x),
+                                                    r9_time     (r),
+                                                    general_time(g),
+                                                    vip_time    (v)
     {
         memset(in_request_queue, 0, sizeof(unsigned int) * RequestTypeN);
         memset(produced,         0, sizeof(unsigned int) * RequestTypeN);
@@ -35,13 +39,18 @@ struct SharedData
 
         pthread_mutex_init(&lock, NULL);
     }
+
+    int max_requests; // command line arguments
+    int tx_time;
+    int r9_time;
+    int general_time;
+    int vip_time;
     
-    pthread_mutex_t         lock;
+    pthread_mutex_t         lock; // mutex for accessing shared data
     pthread_cond_t          cond_consumed;
     pthread_cond_t          cond_vip_consumed;
     pthread_cond_t          cond_unconsumed;
     sem_t                   main_blocker;    
-    int                     max_requests;
     unsigned int            consumed[ConsumerTypeN][RequestTypeN];
     unsigned int            produced[RequestTypeN];
     unsigned int            in_request_queue[RequestTypeN];

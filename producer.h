@@ -27,7 +27,7 @@ void *producer(void *ptr)
         // if we're inserting VIP rooms, sleep while queue at capacity or VIP at capacity
         else
             while (!(sd->in_request_queue[GeneralTable] + sd->in_request_queue[VIPRoom] < CAPACITY && sd->in_request_queue[VIPRoom] < VIP_CAPACITY))
-                pthread_cond_wait(&sd->cond_consumed, &sd->lock);
+                pthread_cond_wait(sd->in_request_queue[VIPRoom] >= VIP_CAPACITY ? &sd->cond_vip_consumed : &sd->cond_consumed, &sd->lock);
 
         // if we've already inserted max_requests, stop
         if (sd->produced[GeneralTable] + sd->produced[VIPRoom] >= sd->max_requests)

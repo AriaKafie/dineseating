@@ -9,7 +9,7 @@
 # Specify compiler
 CC = g++
 # Compiler flags, if you want debug info, add -g
-CCFLAGS = -std=c++17 -g3 -c
+CCFLAGS = -std=c++17 -g -c
 CFLAGS = -g3 -c
 
 # object files

@@ -21,7 +21,7 @@ void *producer(void *ptr)
         pthread_mutex_lock(&sd->lock);
 
         // sleep while the queue is at capacity
-        if constexpr (T == GeneralTable)
+        if (T == GeneralTable)
             while (sd->in_request_queue[GeneralTable] + sd->in_request_queue[VIPRoom] >= CAPACITY)
                 pthread_cond_wait(&sd->cond_consumed, &sd->lock);
         // if we're inserting VIP rooms, sleep while queue at capacity or VIP at capacity

@@ -1,18 +1,22 @@
 
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef SHARED_DATA
+#define SHARED_DATA
 
 #include <cstring>
 #include <pthread.h>
 #include <queue>
 #include <semaphore.h>
+#include <unistd.h>
 
 #include "seating.h"
 
-#define CAPACITY 18
+#define SUCCESS      0
+#define US_PER_MS    1000
+#define CAPACITY     18
 #define VIP_CAPACITY 5
-#define DEFAULT_UNCONSUMED_AVAILABLE 0
-#define VALUE_ZERO 0
+#define VALUE_ZERO   0
+
+inline void sleep(int ms) { usleep(ms * US_PER_MS); }
 
 struct SharedData
 {
@@ -28,25 +32,15 @@ struct SharedData
         pthread_cond_init(&cond_unconsumed,   NULL);
         
         sem_init(&main_blocker, VALUE_ZERO, VALUE_ZERO);
-        
-        /* sem_init(&consumed,     VALUE_ZERO, CAPACITY); */
-        /* sem_init(&vip_consumed, VALUE_ZERO, VIP_CAPACITY); */
-        /* sem_init(&unconsumed,   VALUE_ZERO, DEFAULT_UNCONSUMED_AVAILABLE); */        
-        
+
         pthread_mutex_init(&lock, NULL);
     }
     
     pthread_mutex_t         lock;
-
     pthread_cond_t          cond_consumed;
     pthread_cond_t          cond_vip_consumed;
     pthread_cond_t          cond_unconsumed;
-    sem_t                   main_blocker;
-    
-    /* sem_t                   consumed; */
-    /* sem_t                   vip_consumed; */
-    /* sem_t                   unconsumed; */
-    
+    sem_t                   main_blocker;    
     int                     max_requests;
     unsigned int            consumed[ConsumerTypeN][RequestTypeN];
     unsigned int            produced[RequestTypeN];

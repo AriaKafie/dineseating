@@ -62,7 +62,7 @@ void *consumer(void *ptr)
             sd->consumed[Rev9][GeneralTable] +
             sd->consumed[Rev9][VIPRoom]      >= sd->max_requests)
             break;
-
+        
         while (sd->requests.empty())
             pthread_cond_wait(&sd->cond_unconsumed, &sd->lock);
         

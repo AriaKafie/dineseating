@@ -20,14 +20,14 @@ void *producer(void *ptr)
         // acquire the lock to access the shared data
         pthread_mutex_lock(&sd->lock);
 
+        // if we're producing VIP rooms, first ensure VIP rooms in queue < 5
+        if (T == VIPRoom)
+            while (sd->in_request_queue[VIPRoom] >= VIP_CAPACITY)
+                pthread_cond_wait(&sd->cond_vip_consumed, &sd->lock);
+            
         // sleep while the queue is at capacity
-        if (T == GeneralTable)
-            while (sd->in_request_queue[GeneralTable] + sd->in_request_queue[VIPRoom] >= CAPACITY)
-                pthread_cond_wait(&sd->cond_consumed, &sd->lock);
-        // if we're inserting VIP rooms, sleep while queue at capacity or VIP at capacity
-        else
-            while (!(sd->in_request_queue[GeneralTable] + sd->in_request_queue[VIPRoom] < CAPACITY && sd->in_request_queue[VIPRoom] < VIP_CAPACITY))
-                pthread_cond_wait(sd->in_request_queue[VIPRoom] >= VIP_CAPACITY ? &sd->cond_vip_consumed : &sd->cond_consumed, &sd->lock);
+        while (sd->in_request_queue[GeneralTable] + sd->in_request_queue[VIPRoom] >= CAPACITY)
+            pthread_cond_wait(&sd->cond_consumed, &sd->lock);
 
         // if we've already inserted max_requests, stop
         if (sd->produced[GeneralTable] + sd->produced[VIPRoom] >= sd->max_requests)

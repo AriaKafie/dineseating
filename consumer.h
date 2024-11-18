@@ -32,6 +32,7 @@ void *consumer(void *ptr)
         if (rt == VIPRoom)
             pthread_cond_signal(&sd->cond_vip_consumed);
 
+        // sleep to simulate consumption
         sleep(T == TX ? sd->tx_time : sd->r9_time);
     }
     

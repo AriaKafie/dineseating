@@ -9,6 +9,7 @@ void *producer(void *ptr)
 
     for (;;)
     {
+        // sleep to simulate production
         sleep(T == GeneralTable ? sd->general_time : sd->vip_time);
 
         pthread_mutex_lock(&sd->lock);

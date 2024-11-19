@@ -20,13 +20,25 @@
 #define VIP_CAPACITY 5
 #define VALUE_ZERO   0
 
-// function to sleep for some milliseconds
+/**
+ * @brief     Sleep for some number of milliseconds
+ *
+ * @param ms  The number of milliseconds to sleep for
+*/
 inline void sleep(int ms) { usleep(ms * US_PER_MS); }
 
 // structure to hold the shared data
 struct SharedData
 {
-    // constructor takes and initializes the command line arguments
+    /**
+     * @brief    Construct a SharedData object and initialize its variables
+     *
+     * @param s  The total number of requests to process
+     * @param x  The number of milliseconds TX should take to consume a request
+     * @param r  The number of milliseconds Rev9 should take to consume a request
+     * @param g  The number of milliseconds it should take to produce a general table request
+     * @param v  The number of milliseconds it should take to produce a VIP room request
+    */
     SharedData(int s, int x, int r, int g, int v) : max_requests(s),
                                                     tx_time     (x),
                                                     r9_time     (r),

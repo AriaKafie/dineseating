@@ -36,10 +36,10 @@ int main(int argc, char **argv)
             case 'v': v = std::atoi(optarg); break;
         }
 
-    // initialize the monitor
+    // initialize the shared data
     SharedData sd(s, x, r, g, v);
 
-    // declare 4 worker threads
+    // declare producer and consumer threads
     pthread_t general_producer, vip_producer, tx, r9;
 
     // create each thread

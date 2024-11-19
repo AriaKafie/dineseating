@@ -2,9 +2,18 @@
 // Aria Kafie 828109926
 // Anosh Taraporevala 827939860
 
+#ifndef CONSUMER_H
+#define CONSUMER_H
+
 #include "log.h"
 #include "shared_data.h"
 
+/**
+ * @brief      Continually consume seating requests from the shared queue
+ *
+ * @param T    The ConsumerType we are simulating (TX or Rev9)
+ * @param ptr  A pointer to the shared data structure holding seating information
+*/
 template<ConsumerType T>
 void *consumer(void *ptr)
 {
@@ -59,3 +68,5 @@ void *consumer(void *ptr)
     // exit with code 0
     pthread_exit(SUCCESS);
 }
+
+#endif

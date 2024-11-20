@@ -31,8 +31,7 @@ void *producer(void *ptr)
 
         // if we're producing VIP rooms, first ensure VIP rooms in queue < 5
         if (T == VIPRoom)
-            while (sd->in_request_queue[VIPRoom] >= VIP_CAPACITY)
-                pthread_cond_wait(&sd->cond_vip_consumed, &sd->lock);
+            for (;sd->in_request_queue[VIPRoom] >= VIP_CAPACITY; pthread_cond_wait(&sd->cond_vip_consumed, &sd->lock));
             
         // sleep while the queue is at capacity
         while (sd->in_request_queue[GeneralTable] + sd->in_request_queue[VIPRoom] >= CAPACITY)
